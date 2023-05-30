@@ -11,7 +11,7 @@
                 <vs-input placeholder="ระบุชื่อสินค้า" v-model="filter.name" />
             </v-col>
             <v-col md="2">
-                <vs-input placeholder="วันที่อัพเดท" v-model="filter.date" />
+                <vs-input placeholder="วันที่อัพเดท" type="date" v-model="filter.date" />
             </v-col>
             <v-col md="5"></v-col>
             <v-col md="2">
@@ -61,7 +61,7 @@
                 </vs-select>
             </v-col>
             <v-col md="1">
-                <vs-button flat @click=" filterData()">ค้นหา</vs-button>
+                <vs-button flat @click="getProductList()">ค้นหา</vs-button>
             </v-col>
             <v-col md="3">
                 <vs-button transparent @click="filterAllData()">แสดงทั้งหมด</vs-button>
@@ -83,23 +83,28 @@
                 </template>
                 <template #tbody>
                     <vs-tr :key="i" v-for="(item, i) in items[0]" :data="item">
-                        <vs-td>{{(i+1)+max*(page-1)}}</vs-td>
+                        <vs-td>{{ (i + 1) + max * (page - 1) }}</vs-td>
                         <vs-td>
-                            <v-img lazy-src="https://picsum.photos/id/11/10/6" max-height="100" max-width="100"
-                                src="https://picsum.photos/id/11/500/300"></v-img>
+                            <div v-if="item.attributes.file_name.data == null">
+                                -
+                            </div>
+                            <div v-else>
+                                <v-img max-height="100" max-width="100"
+                                    :src="item.attributes.file_name.data == null ? '-' : 'http://27.254.33.13:1331' + item.attributes.file_name.data.attributes.url"></v-img>
+                            </div>
                         </vs-td>
                         <vs-td>{{ item.attributes.product_code }}</vs-td>
-                       
+
                         <vs-td>{{ item.attributes.product_name }}</vs-td>
                         <vs-td>{{ item.attributes.product_main_category.data?.attributes.product_maincate_name }}</vs-td>
                         <vs-td>{{ item.attributes.product_sub_category.data?.attributes.product_subcate_name }}</vs-td>
                         <vs-td>{{ item.attributes.finishing.data?.attributes.finishing_name }}</vs-td>
                         <vs-td>{{ item.attributes.material_type_m.data?.attributes.material_type_name }}</vs-td>
-                        <vs-td>{{ item.attributes.product_prices.data.length == 0 ? '-' : 'ว่างไว้ก่อน' }}</vs-td>
+                        <vs-td>{{ item.attributes.product_prices.data.length == 0 ? '-' : item.attributes.product_prices.data[0].attributes.price }}</vs-td>
                         <vs-td>{{ item.attributes.unit_m.data == null ? '-' :
                             item.attributes.unit_m.data.attributes.unit_name
                         }}</vs-td>
-                        <vs-td>{{ item.attributes.updatedAt == null ? '-' : 'ว่างไว้ก่อน' }}</vs-td>
+                        <vs-td>{{ item.attributes.updatedAt == null ? '-' : covertDate(item.attributes.updatedAt) }}</vs-td>
                         <vs-td>
                             <vs-tr>
                                 <vs-td class="pa-0">
@@ -118,7 +123,7 @@
                 </template>
                 <template #footer>
                     <div @click="getProductList()">
-                         <vs-pagination v-model="page" :length="lengthPage" />
+                        <vs-pagination v-model="page" :length="lengthPage" />
                     </div>
                 </template>
             </vs-table>
@@ -309,7 +314,7 @@
                         </v-col>
                         <v-col cols="12" sm="6" md="6">
                             <label>รูปภาพ *</label>
-                            <b-form-file v-model="itemsDetail.file_name" class="mt-3" plain></b-form-file>
+                            <input type="file" ref="file" id="upload" @change="uploadFile($event.target.files, file)" />
                         </v-col>
                         <v-divider></v-divider>
                         <v-col cols="12" sm="6" md="6">
@@ -558,8 +563,8 @@ export default {
     data() {
         return {
             is_edit: false,
-            page: 2,
-            lengthPage:'',
+            page: 1,
+            lengthPage: '',
             max: 10,
             selected: '',
             dialog: false,
@@ -694,16 +699,25 @@ export default {
         this.getMaterialThickness()
         this.getMaterialWidth()
     },
-    computed:{
+    computed: {
     },
 
     methods: {
+        covertDate(val) {
+            const dateCovert = (new Date(val).toISOString().split("T")[0]).split('-');
+            return (dateCovert[2].toString()) + '/' + (dateCovert[1].toString()) + '/' + (dateCovert[0].toString())
+        },
         getProductList() {
-            this.items= []
+            console.log(this.filter.date);
+            this.items = []
             console.log(this.page);
-            fetch(process.env.VUE_APP_BACKEND + 'products?populate=*&pagination[page]='+this.page+'&pagination[pageSize]=10')
+            fetch(process.env.VUE_APP_BACKEND + 'products?&filters[product_name][$contains]='+this.filter.name+'&filters[material_type_m][id][$contains]='+this.filter.material+'&filters[product_main_category][id][$contains]='+this.filter.product_main_type+'&filters[product_sub_category][id][$contains]='+this.filter.product_sub_type+
+            '&filters[finishing][id][$contains]='+this.filter.finishing+'&filters[createdAt][$contains]='+this.filter.date+'&pagination[page]='
+             + this.page+'&pagination[pageSize]=10'+'&populate=*')
+
                 .then(response => response.json())
                 .then((resp) => {
+                    console.log(resp);
                     this.lengthPage = resp.meta.pagination.pageCount
                     this.items.push(resp.data)
                 });
@@ -720,9 +734,10 @@ export default {
         ///////////////////////////////FetchData////////////////////////////////////
         getProductDetail(id) {
             this.is_edit = true
-            fetch(process.env.VUE_APP_BACKEND + 'products/' + id + '?populate=*')
+            fetch(process.env.VUE_APP_BACKEND + 'products/' + 712 + '?populate=*')
                 .then(response => response.json())
                 .then((resp) => {
+                    console.log(resp);
                     this.itemsDetail.id = resp.data.id
                     this.itemsDetail.customer_type = resp.data.attributes.customer_type.data.id
                     this.itemsDetail.product_name = resp.data.attributes.product_name
@@ -737,7 +752,7 @@ export default {
                     this.itemsDetail.width = resp.data.attributes.material_width_m.data.id
                     this.itemsDetail.height = resp.data.attributes.material_length_m.data.id
                     this.itemsDetail.length = resp.data.attributes.material_thickness_m.data.id
-                     // fetch(process.env.VUE_APP_BACKEND + 'product-prices?populate=*&filters[product][id][$eq]=' + this.MsterialId+'&pagination[page]='+this.page+'&pagination[pageSize]=5')
+                    // fetch(process.env.VUE_APP_BACKEND + 'product-prices?populate=*&filters[product][id][$eq]=' + this.MsterialId+'&pagination[page]='+this.page+'&pagination[pageSize]=5')
                     //         .then(response => response.json())
                     //         .then((resp) => {
                     //             const arr = []
@@ -891,9 +906,12 @@ export default {
                 this.itemsDetail.file_name = null,
                 this.dialog = true
         },
-
-
+        uploadFile() {
+            this.itemsDetail.file_name = this.$refs.file.files;
+            console.log(this.itemsDetail.file_name);
+        },
         saveOrEditProduct() {
+            console.log(this.itemsDetail.file_name);
             if (this.is_edit == true) {
                 axios.put(process.env.VUE_APP_BACKEND + 'products/' + this.itemsDetail.id, {
                     "data": {
@@ -1054,6 +1072,8 @@ export default {
             this.filter.product_sub_type = ''
             this.filter.finishing = ''
             this.filter.material = ''
+            this.filter.finishing = ''
+            this.getProductList()
         }
     },
 };

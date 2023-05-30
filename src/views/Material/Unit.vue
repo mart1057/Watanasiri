@@ -8,13 +8,13 @@
                 <label class="pt-4">คำค้นหา:</label>
             </v-col>
             <v-col md="2">
-                <vs-input placeholder="Search" />
+                <vs-input placeholder="Search" v-model="filter.text" />
             </v-col>
             <v-col md="1">
-                <vs-button flat>ค้นหา</vs-button>
+                <vs-button flat @click="getUnit()">ค้นหา</vs-button>
             </v-col>
             <v-col md="3">
-                <vs-button transparent>แสดงทั้งหมด</vs-button>
+                <vs-button transparent @click="filterData()">แสดงทั้งหมด</vs-button>
             </v-col>
             <v-col md="3"></v-col>
             <v-col md="2">
@@ -46,7 +46,7 @@
                         <vs-td>
                             <vs-tr>
                                 <vs-td class="pa-0">
-                                    <vs-button transparent @click.prevent="getLengthDetail(item.id), title = 'แก้ไข'">
+                                    <vs-button transparent @click.prevent="getUnitDetail(item.id), title = 'แก้ไข'">
                                         <i class=" bx bx-edit"></i>
                                     </vs-button>
                                 </vs-td>
@@ -60,7 +60,7 @@
                     </vs-tr>
                 </template>
                 <template #footer>
-                    <div @click="getLength()">
+                    <div @click="getUnit()">
                          <vs-pagination v-model="page" :length="lengthPage" />
                     </div>
                 </template>
@@ -157,6 +157,9 @@ export default {
                 { text: 'ดำเนินการ', value: 'actions' },
             ],
             items: [],
+            filter: {
+                text: '',
+            },
             formItem: {
                 id: '',
                 name: '',
@@ -167,7 +170,7 @@ export default {
     },
 
     mounted() {
-        this.getLength()
+        this.getUnit()
     },
 
     methods: {
@@ -214,8 +217,9 @@ export default {
             const dateCovert = (new Date(val).toISOString().split("T")[0]).split('-');
             return (dateCovert[2].toString()) + '/' + (dateCovert[1].toString()) + '/' + (dateCovert[0].toString())
         },
-        getLength() {
-            fetch(process.env.VUE_APP_BACKEND + 'units?populate=*&pagination[page]='+this.page+'&pagination[pageSize]=10')
+        getUnit() {
+            this.items= []
+            fetch(process.env.VUE_APP_BACKEND + 'units?populate=*&filters[unit_name][$contains]='+this.filter.text+'&pagination[page]='+this.page+'&pagination[pageSize]=10')
                 .then(response => response.json())
                 .then((resp) => {
                     this.lengthPage = resp.meta.pagination.pageCount
@@ -224,7 +228,7 @@ export default {
                     console.log(this.items)
                 );
         },
-        getLengthDetail(id) {
+        getUnitDetail(id) {
             this.isEdit = true
             fetch(process.env.VUE_APP_BACKEND + 'units/' + id)
                 .then(response => response.json())
@@ -285,7 +289,13 @@ export default {
                 }
             })
             this.dialog = false
-        }
+        },
+        filterData() {
+            this.page = 1
+            this.filter.text = ''
+            this.getUnit();
+            console.log(this.filter);
+        },
     },
 };
 </script>
