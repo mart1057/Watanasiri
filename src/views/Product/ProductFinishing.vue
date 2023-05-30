@@ -11,10 +11,10 @@
                 <vs-input placeholder="Search" v-model="filter.text" />
             </v-col>
             <v-col md="1">
-                <vs-button flat @click="filterData()">ค้นหา</vs-button>
+                <vs-button flat @click="getFinishings()">ค้นหา</vs-button>
             </v-col>
             <v-col md="3">
-                <vs-button transparent>แสดงทั้งหมด</vs-button>
+                <vs-button transparent @click="filterData()">แสดงทั้งหมด</vs-button>
             </v-col>
             <v-col md="3"></v-col>
             <v-col md="2">
@@ -178,7 +178,7 @@ export default {
 
         getFinishings() {
             this.items = []
-            fetch(process.env.VUE_APP_BACKEND + 'finishings?populate=*&pagination[page]='+this.page+'&pagination[pageSize]=10')
+            fetch(process.env.VUE_APP_BACKEND + 'finishings?populate=*&filters[finishing_name][$contains]='+this.filter.text+'&pagination[page]='+this.page+'&pagination[pageSize]=10')
                 .then(response => response.json())
                 .then((resp) => {
                     this.lengthPage = resp.meta.pagination.pageCount
@@ -290,7 +290,9 @@ export default {
             }
         },
         filterData() {
-            console.log(this.filter);
+            this.filter.text=''
+            this.page = 1
+            this.getFinishings()
         },
         changeStatus(data) {
             console.log(this.formItem.id);

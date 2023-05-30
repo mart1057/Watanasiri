@@ -8,13 +8,13 @@
                 <label class="pt-4">คำค้นหา:</label>
             </v-col>
             <v-col md="2">
-                <vs-input placeholder="Search" />
+                <vs-input placeholder="Search" v-model="filter.text"/>
             </v-col>
             <v-col md="1">
-                <vs-button flat>ค้นหา</vs-button>
+                <vs-button flat @click="getSupplies()">ค้นหา</vs-button>
             </v-col>
             <v-col md="3">
-                <vs-button transparent>แสดงทั้งหมด</vs-button>
+                <vs-button transparent @click="filterData()">แสดงทั้งหมด</vs-button>
             </v-col>
             <v-col md="3"></v-col>
             <v-col md="2">
@@ -140,6 +140,9 @@ export default {
             isEdit: false,
             dialogDelete: false,
             row: null,
+            filter: {
+                text: '',
+            },
             list: ['Foo', 'Bar', 'Fizz', 'Buzz'],
             headers: [
                 {
@@ -217,7 +220,7 @@ export default {
         },
         getSupplies() {
             this.items = []
-            fetch(process.env.VUE_APP_BACKEND + 'supplies?populate=*&pagination[page]='+this.page+'&pagination[pageSize]=10')
+            fetch(process.env.VUE_APP_BACKEND + 'supplies?populate=*&filters[supplies_name][$contains]='+this.filter.text+'&pagination[page]='+this.page+'&pagination[pageSize]=10')
                 .then(response => response.json())
                 .then((resp) => {
                     this.lengthPage = resp.meta.pagination.pageCount
@@ -287,7 +290,13 @@ export default {
                 }
             })
             this.dialog = false
-        }
+        },
+        filterData() {
+            this.page = 1
+            this.filter.text = ''
+            this.getSupplies()
+            console.log(this.filter);
+        },
     },
 };
 </script>
