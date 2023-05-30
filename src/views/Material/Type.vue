@@ -36,8 +36,8 @@
                     </vs-tr>
                 </template>
                 <template #tbody>
-                    <vs-tr :key="i" v-for="(item, i) in $vs.getPage(items[0], page, max)" :data="item">
-                        <vs-td>{{ i + 1 }}</vs-td>
+                    <vs-tr :key="i" v-for="(item, i) in items[0]" :data="item">
+                        <vs-td>{{(i+1)+max*(page-1)}}</vs-td>
                         <vs-td>{{ item.attributes.material_type_code }}</vs-td>
                         <vs-td>{{ item.attributes.material_type_name }}</vs-td>
                         <vs-td>{{ item.attributes.category_id }}</vs-td>
@@ -62,7 +62,9 @@
                     </vs-tr>
                 </template>
                 <template #footer>
-                    <vs-pagination v-model="page" :length="$vs.getLength(items, max)" />
+                    <div @click="getMaterialTypes()">
+                         <vs-pagination v-model="page" :length="lengthPage" />
+                    </div>
                 </template>
             </vs-table>
         </v-row>
@@ -140,6 +142,7 @@ export default {
             max: 10,
             selected: '',
             dialog: false,
+            lengthPage:'',
             dialogDelete: false,
             title: '',
             isEdit: false,
@@ -230,10 +233,11 @@ export default {
             return (dateCovert[2].toString()) + '/' + (dateCovert[1].toString()) + '/' + (dateCovert[0].toString())
         },
         getMaterialTypes() {
-            fetch(process.env.VUE_APP_BACKEND + 'material-types')
+            this.items = []
+            fetch(process.env.VUE_APP_BACKEND + 'material-types?populate=*&pagination[page]='+this.page+'&pagination[pageSize]=10')
                 .then(response => response.json())
                 .then((resp) => {
-                    console.log(resp);
+                    this.lengthPage = resp.meta.pagination.pageCount
                     this.items.push(resp.data)
                 },
                 console.log(this.items)

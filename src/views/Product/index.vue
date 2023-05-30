@@ -82,18 +82,19 @@
                     </vs-tr>
                 </template>
                 <template #tbody>
-                    <vs-tr :key="i" v-for="(item, i) in $vs.getPage(items[0], page, max)" :data="item">
+                    <vs-tr :key="i" v-for="(item, i) in items[0]" :data="item">
                         <vs-td>{{(i+1)+max*(page-1)}}</vs-td>
                         <vs-td>
                             <v-img lazy-src="https://picsum.photos/id/11/10/6" max-height="100" max-width="100"
                                 src="https://picsum.photos/id/11/500/300"></v-img>
                         </vs-td>
                         <vs-td>{{ item.attributes.product_code }}</vs-td>
+                       
                         <vs-td>{{ item.attributes.product_name }}</vs-td>
-                        <vs-td>{{ item.attributes.product_main_category.data.attributes.product_maincate_name }}</vs-td>
-                        <vs-td>{{ item.attributes.product_sub_category.data.attributes.product_subcate_name }}</vs-td>
-                        <vs-td>{{ item.attributes.finishing.data.attributes.finishing_name }}</vs-td>
-                        <vs-td>{{ item.attributes.material_type_m.data.attributes.material_type_name }}</vs-td>
+                        <vs-td>{{ item.attributes.product_main_category.data?.attributes.product_maincate_name }}</vs-td>
+                        <vs-td>{{ item.attributes.product_sub_category.data?.attributes.product_subcate_name }}</vs-td>
+                        <vs-td>{{ item.attributes.finishing.data?.attributes.finishing_name }}</vs-td>
+                        <vs-td>{{ item.attributes.material_type_m.data?.attributes.material_type_name }}</vs-td>
                         <vs-td>{{ item.attributes.product_prices.data.length == 0 ? '-' : 'ว่างไว้ก่อน' }}</vs-td>
                         <vs-td>{{ item.attributes.unit_m.data == null ? '-' :
                             item.attributes.unit_m.data.attributes.unit_name
@@ -116,7 +117,9 @@
                     </vs-tr>
                 </template>
                 <template #footer>
-                    <vs-pagination v-model="page" :length="lengthPage" />
+                    <div @click="getProductList()">
+                         <vs-pagination v-model="page" :length="lengthPage" />
+                    </div>
                 </template>
             </vs-table>
         </v-row>
@@ -555,7 +558,7 @@ export default {
     data() {
         return {
             is_edit: false,
-            page: 1,
+            page: 2,
             lengthPage:'',
             max: 10,
             selected: '',
@@ -692,16 +695,16 @@ export default {
         this.getMaterialWidth()
     },
     computed:{
-
     },
 
     methods: {
         getProductList() {
+            this.items= []
+            console.log(this.page);
             fetch(process.env.VUE_APP_BACKEND + 'products?populate=*&pagination[page]='+this.page+'&pagination[pageSize]=10')
                 .then(response => response.json())
                 .then((resp) => {
                     this.lengthPage = resp.meta.pagination.pageCount
-                    console.log(this.page);
                     this.items.push(resp.data)
                 });
         },
@@ -734,7 +737,15 @@ export default {
                     this.itemsDetail.width = resp.data.attributes.material_width_m.data.id
                     this.itemsDetail.height = resp.data.attributes.material_length_m.data.id
                     this.itemsDetail.length = resp.data.attributes.material_thickness_m.data.id
-                    this.getProductPrice(id)
+                     // fetch(process.env.VUE_APP_BACKEND + 'product-prices?populate=*&filters[product][id][$eq]=' + this.MsterialId+'&pagination[page]='+this.page+'&pagination[pageSize]=5')
+                    //         .then(response => response.json())
+                    //         .then((resp) => {
+                    //             const arr = []
+                    //             this.lengthPage = resp.meta.pagination.pageCount
+                    //             arr.push(resp.data)
+                    //             this.itemsDetail.table_price = arr[0]
+                    //         })
+                    //     console.log(this.items);
                 }
                 );
             this.dialog = true
@@ -909,6 +920,7 @@ export default {
                 })
                     .then((response) => {
                         this.saveOrEditProductPrice(response.data.data.id)
+                        this.dialog = false
                     })
                     .catch(function (error) {
                         console.log(error);

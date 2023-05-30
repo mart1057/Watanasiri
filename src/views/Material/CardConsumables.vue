@@ -112,8 +112,8 @@
                             </vs-tr>
                         </template>
                         <template #tbody>
-                            <vs-tr :key="i" v-for="(item, i) in $vs.getPage(items, page, max)" :data="item">
-                                <vs-td>{{ i + 1 }}</vs-td>
+                            <vs-tr :key="i" v-for="(item, i) in items" :data="item">
+                                <vs-td>{{(i+1)+max*(page-1)}}</vs-td>
                                 <vs-td>{{ item.attributes.price }}</vs-td>
                                 <vs-td>{{ covertDate(item.attributes.date) }}</vs-td>
                                 <vs-td>
@@ -123,9 +123,9 @@
                                 </vs-td>
                             </vs-tr>
                         </template>
-                        <template #footer>
-                            <vs-pagination v-model="page" :length="$vs.getLength(items, max)" />
-                        </template>
+                        <div @click="getExtraSuppliesDetail()">
+                         <vs-pagination v-model="page" :length="lengthPage" />
+                    </div>
                     </vs-table>
                 </v-col>
                 <v-col cols="12" sm="12" md="12">
@@ -228,6 +228,7 @@ export default {
             page: 1,
             max: 10,
             selected: '',
+            lengthPage:'',
             title: '',
             row: null,
             list: ['Foo', 'Bar', 'Fizz', 'Buzz'],
@@ -409,7 +410,7 @@ export default {
             console.log(this.isEdit);
             if (this.isEdit == true) {
                 console.log(this.MsterialId);
-                fetch(process.env.VUE_APP_BACKEND + 'supplies/' + 917 + '?populate=*')
+                fetch(process.env.VUE_APP_BACKEND + 'supplies/' + this.MsterialId + '?populate=*')
                     .then(response => response.json())
                     .then((resp) => {
                         console.log('data: ', resp);
@@ -426,7 +427,7 @@ export default {
                         this.formItem.material_type2 = resp.data.attributes.material_type.data.id
                         this.formItem.id = resp.data.id
 
-                        fetch(process.env.VUE_APP_BACKEND + 'supplie-prices?populate=*&filters[supplie][id][$eq]='+917)
+                        fetch(process.env.VUE_APP_BACKEND + 'supplie-prices?populate=**&filters[raw_material][id][$eq]=' + this.MsterialId+'&pagination[page]='+this.page+'&pagination[pageSize]=5')
                             .then(response => response.json())
                             .then((resp) => {
                                 console.log(resp);
@@ -457,7 +458,7 @@ export default {
         saveOrEdit() {
             if (this.isEdit) {
                 console.log('แก้ไข');
-                axios.put(process.env.VUE_APP_BACKEND + 'supplies/' +917, {
+                axios.put(process.env.VUE_APP_BACKEND + 'supplies/' +this.MsterialId, {
                     "data": {
                         "supplies_code": this.formItem.supplies_code,
                         "supplies_name": this.formItem.supplies_name,

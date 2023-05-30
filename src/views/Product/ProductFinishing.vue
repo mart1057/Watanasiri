@@ -37,11 +37,12 @@
                     </vs-tr>
                 </template>
                 <template #tbody>
-                    <vs-tr :key="i" v-for="(item, i) in $vs.getPage(items[0], page, max)" :data="item">
-                        <vs-td>{{ i + 1 }}</vs-td>
+                    <vs-tr :key="i" v-for="(item, i) in items[0]" :data="item">
+                        <vs-td>{{(i+1)+max*(page-1)}}</vs-td>
                         <vs-td>{{ item.attributes.finishing_code }}</vs-td>
                         <vs-td>{{ item.attributes.finishing_name }}</vs-td>
-                        <vs-td><vs-switch style="width: 50%;" success v-model="item.attributes.status" @change="changeStatus(item)" /></vs-td>
+                        <vs-td><vs-switch style="width: 50%;" success v-model="item.attributes.status"
+                                @change="changeStatus(item)" /></vs-td>
                         <vs-td>
                             <vs-tr>
                                 <vs-td class="pa-0">
@@ -59,7 +60,9 @@
                     </vs-tr>
                 </template>
                 <template #footer>
-                    <vs-pagination v-model="page" :length="$vs.getLength(items, max)" />
+                    <div @click="getFinishings()">
+                        <vs-pagination v-model="page" :length="lengthPage" />
+                    </div>
                 </template>
             </vs-table>
         </v-row>
@@ -133,6 +136,7 @@ export default {
             max: 10,
             selected: '',
             title: '',
+            lengthPage: '',
             list: ['Foo', 'Bar', 'Fizz', 'Buzz'],
             row: null,
             dialog: false,
@@ -144,7 +148,7 @@ export default {
                 name: '',
                 rank: '',
                 status: '',
-                id:''
+                id: ''
             },
             filter: {
                 text: '',
@@ -166,16 +170,20 @@ export default {
     },
 
     mounted() {
-        this.getProducMaintList()
+        this.getFinishings()
     },
 
     methods: {
 
 
-        getProducMaintList() {
-            fetch(process.env.VUE_APP_BACKEND + 'finishings?populate=*')
+        getFinishings() {
+            this.items = []
+            fetch(process.env.VUE_APP_BACKEND + 'finishings?populate=*&pagination[page]='+this.page+'&pagination[pageSize]=10')
                 .then(response => response.json())
-                .then(resp => this.items.push(resp.data));
+                .then((resp) => {
+                    this.lengthPage = resp.meta.pagination.pageCount
+                    this.items.push(resp.data)
+                });
             console.log(this.items);
         },
         getProductMainDetail(id) {
@@ -201,7 +209,7 @@ export default {
             this.is_edit = false
             this.formItem.name = ''
             this.formItem.status = ''
-            this.formItem.rank =''
+            this.formItem.rank = ''
             this.formItem.code = ''
             this.dialog = true
         },
@@ -249,13 +257,13 @@ export default {
 
             }
             else {
-                console.log( this.formItem);
+                console.log(this.formItem);
                 axios.post(process.env.VUE_APP_BACKEND + 'finishings', {
                     "data": {
                         "finishing_code": this.formItem.code,
                         "finishing_name": this.formItem.name,
                         "rank": this.formItem.rank,
-                        "status": this.formItem.status, 
+                        "status": this.formItem.status,
                     }
                 })
                     .then((response) => {
@@ -284,15 +292,15 @@ export default {
         filterData() {
             console.log(this.filter);
         },
-        changeStatus(data){
-                console.log(this.formItem.id);
-                axios.put(process.env.VUE_APP_BACKEND + 'finishings/' + data.id, {
-                    "data": {
-                        "status": data.attributes.status,
-                    }
-                })
-                this.dialog = false
-            console.log(data.attributes.status,data.id);
+        changeStatus(data) {
+            console.log(this.formItem.id);
+            axios.put(process.env.VUE_APP_BACKEND + 'finishings/' + data.id, {
+                "data": {
+                    "status": data.attributes.status,
+                }
+            })
+            this.dialog = false
+            console.log(data.attributes.status, data.id);
         }
     },
 };

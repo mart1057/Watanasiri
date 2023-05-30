@@ -37,8 +37,8 @@
                     </vs-tr>
                 </template>
                 <template #tbody>
-                    <vs-tr :key="i" v-for="(item, i) in $vs.getPage(items[0], page, max)" :data="item">
-                        <vs-td>{{ i + 1 }}</vs-td>
+                    <vs-tr :key="i" v-for="(item, i) in items[0]" :data="item">
+                        <vs-td>{{(i+1)+max*(page-1)}}</vs-td>
                         <vs-td>{{ item.attributes.product_cate_code }}</vs-td>
                         <vs-td>{{ item.attributes.product_cate_name }}</vs-td>
                         <vs-td><vs-switch style="width: 50%;" success v-model="item.attributes.status"  @change="changeStatus(item)" /></vs-td>
@@ -59,7 +59,9 @@
                     </vs-tr>
                 </template>
                 <template #footer>
-                    <vs-pagination v-model="page" :length="$vs.getLength(items, max)" />
+                    <div @click="getProducTypetList()">
+                         <vs-pagination v-model="page" :length="lengthPage" />
+                    </div>
                 </template>
             </vs-table>
         </v-row>
@@ -131,6 +133,7 @@ export default {
             max: 10,
             selected: '',
             title: '',
+            lengthPage:'',
             list: ['Foo', 'Bar', 'Fizz', 'Buzz'],
             row: null,
             dialog: false,
@@ -170,9 +173,13 @@ export default {
 
 
         getProducTypetList() {
-            fetch(process.env.VUE_APP_BACKEND + 'product-categories?populate=*')
+            this.items = []
+            fetch(process.env.VUE_APP_BACKEND + 'product-categories?populate=*&pagination[page]='+this.page+'&pagination[pageSize]=10')
                 .then(response => response.json())
-                .then(resp => this.items.push(resp.data));
+                .then(resp => {
+                    this.lengthPage = resp.meta.pagination.pageCount
+                   this.items.push(resp.data) 
+                });
             console.log(this.items);
         },
         getProductTypeDetail(id,i) {

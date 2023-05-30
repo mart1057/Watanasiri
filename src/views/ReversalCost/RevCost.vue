@@ -18,7 +18,7 @@
                             <vs-input type="date" label="วันที่ *" />
                         </v-col>
                         <v-col cols="12" sm="4" md="3">
-                            <vs-select block placeholder="Select" label="บริษัท *" v-model="selected" @change="getProject(selected)">
+                            <vs-select block placeholder="Select" label="บริษัท *" v-model="formItem.company" @change="getProject(formItem.company)">
                                 <vs-option v-for="(item, i) in company[0]" :label="item.attributes.company_name" :key="i" :value="item.id"
                                >
                                     {{ item.attributes.company_name }}
@@ -26,14 +26,14 @@
                             </vs-select>
                         </v-col>
                         <v-col cols="12" sm="4" md="3">
-                            <vs-select block placeholder="Select" label="โครงการ *" v-model="selected">
+                            <vs-select block placeholder="Select" label="โครงการ *" v-model="formItem.project" @change="getSale(formItem.project)">
                                 <vs-option v-for="(item, i) in project[0]" :label=" item.attributes.project_code_number" :key="i" :value="item.id">
                                     {{ item.attributes.project_name }}
                                 </vs-option>
                             </vs-select>
                         </v-col>
                         <v-col cols="12" sm="4" md="3">
-                            <vs-select block placeholder="Select" label="เลขที่สั่งขาย *" v-model="selected">
+                            <vs-select block placeholder="Select" label="เลขที่สั่งขาย *" v-model="formItem.sale_order">
                                 <vs-option v-for="(item, i) in saleOrder[0]" :label="item.id" :key="i" :value="item.id">
                                     {{ item.id }}
                                 </vs-option>
@@ -148,6 +148,11 @@ export default {
             company:[],
             project:[],
             saleOrder:[],
+            formItem:{
+                company:'',
+                project:'',
+                sale_order:''
+            },
             items: [
                 {
                     code: 'Lollipop',
@@ -167,7 +172,6 @@ export default {
 
     mounted() {
         this.getCompany()
-        this.getSale()
     },
 
     methods: {
@@ -223,9 +227,9 @@ export default {
                     console.log(this.items)
                 );
         },
-        getProject(id) {
-            console.log(id);
-            fetch(process.env.VUE_APP_BACKEND + 'projects?populate=*&filters[customer_company][id][$eq]=' + id)
+        getProject(id_company) {
+            this.project = []
+            fetch(process.env.VUE_APP_BACKEND + 'projects?populate=*&filters[customer_company][id][$eq]=' + id_company)
                 .then(response => response.json())
                 .then((resp) => {
                     console.log(resp);
@@ -234,16 +238,21 @@ export default {
                     console.log(this.items)
                 );
         },
-        getSale() {
-            fetch(process.env.VUE_APP_BACKEND + 'sale-orders')
+        getSale(id_project) {
+            this.saleOrder=[]
+            fetch(process.env.VUE_APP_BACKEND + 'sale-orders?populate=*&filters[project][id][$eq]='+id_project)
                 .then(response => response.json())
                 .then((resp) => {
                     console.log(resp);
                     this.saleOrder.push(resp.data)
+
                 },
                     console.log(this.items)
                 );
         },
+        getEstimution(){
+            
+        }
     },
 };
 </script>

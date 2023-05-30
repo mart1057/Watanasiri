@@ -36,13 +36,13 @@
                     </vs-tr>
                 </template>
                 <template #tbody>
-                    <vs-tr :key="i" v-for="(item, i) in $vs.getPage(items[0], page, max)" :data="item">
-                        <vs-td>{{ i + 1 }}</vs-td>
-                        <vs-td>{{ item.attributes.material_type.data.attributes.material_type_name }}</vs-td>
-                        <vs-td>{{ item.attributes.metal_shape.data.attributes.metal_shape_name }}</vs-td>
-                        <vs-td>{{ item.attributes.metal_effect.data.attributes.metal_effects_name }}</vs-td>
+                    <vs-tr :key="i" v-for="(item, i) in items[0]" :data="item">
+                        <vs-td>{{(i+1)+max*(page-1)}}</vs-td>
+                        <vs-td>{{ item.attributes.material_type.data?.attributes.material_type_name }}</vs-td>
+                        <vs-td>{{ item.attributes.metal_shape.data?.attributes.metal_shape_name }}</vs-td>
+                        <vs-td>{{ item.attributes.metal_effect.data?.attributes.metal_effects_name }}</vs-td>
                         <vs-td>{{ item.attributes.material_thickness.data?.attributes.name }}</vs-td>
-                        <vs-td>{{ item.attributes.material_width.data.attributes.name }}</vs-td>
+                        <vs-td>{{ item.attributes.material_width.data?.attributes.name }}</vs-td>
                         <vs-td>{{ item.attributes.material_length.data?.attributes.name }}</vs-td>
                         <vs-td>{{ item.attributes.raw_material_code }}</vs-td>
                         <vs-td>{{ item.attributes.raw_material_name }}</vs-td>
@@ -75,7 +75,9 @@
                     </vs-tr>
                 </template>
                 <template #footer>
-                    <vs-pagination v-model="page" :length="$vs.getLength(items, max)" />
+                    <div @click="getMaterialList()">
+                         <vs-pagination v-model="page" :length="lengthPage" />
+                    </div>
                 </template>
             </vs-table>
         </v-row>
@@ -130,6 +132,7 @@ export default {
             page: 1,
             max: 10,
             selected: '',
+            lengthPage:'',
             dialog: false,
             dialogDelete: false,
             id_material:'',
@@ -215,9 +218,13 @@ export default {
         },
         ////////////////////////////////// fetch ///////////////////////
         getMaterialList() {
-            fetch(process.env.VUE_APP_BACKEND + 'materials?populate=*')
+            this.items = []
+            fetch(process.env.VUE_APP_BACKEND + 'materials?populate=*&pagination[page]='+this.page+'&pagination[pageSize]=10')
                 .then(response => response.json())
-                .then(resp => this.items.push(resp.data));
+                .then(resp => {
+                    this.lengthPage = resp.meta.pagination.pageCount
+                    this.items.push(resp.data)
+                });
             console.log(this.items);
         },
         changeStatus(data){

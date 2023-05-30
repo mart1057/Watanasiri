@@ -132,8 +132,8 @@
                             </vs-tr>
                         </template>
                         <template #tbody>
-                            <vs-tr :key="i" v-for="(item, i) in $vs.getPage(items, page, max)" :data="item">
-                                <vs-td>{{ i + 1 }}</vs-td>
+                            <vs-tr :key="i" v-for="(item, i) in items" :data="item">
+                                <vs-td>{{(i+1)+max*(page-1)}}</vs-td>
                                 <vs-td>{{ item.attributes.price }}</vs-td>
                                 <vs-td>{{ item.attributes.remark }}</vs-td>
                                 <vs-td>{{ covertDate(item.attributes.date) }}</vs-td>
@@ -145,8 +145,10 @@
                             </vs-tr>
                         </template>
                         <template #footer>
-                            <vs-pagination v-model="page" :length="$vs.getLength(items, max)" />
-                        </template>
+                    <div @click="getMaterialDetail()">
+                         <vs-pagination v-model="page" :length="lengthPage" />
+                    </div>
+                </template>
                     </vs-table>
                 </v-col>
                 <v-col cols="12" sm="12" md="12">
@@ -282,6 +284,7 @@ export default {
             page: 1,
             max: 10,
             title: '',
+            lengthPage:'',
             row: null,
             list: ['Foo', 'Bar', 'Fizz', 'Buzz'],
             selected: '',
@@ -397,7 +400,7 @@ export default {
         getMaterialDetail() {
             if (this.isEdit == true) {
                 console.log(this.MsterialId);
-                fetch(process.env.VUE_APP_BACKEND + 'materials/' + 1954+ '?populate=*')
+                fetch(process.env.VUE_APP_BACKEND + 'materials/' + this.MsterialId+ '?populate=*')
                     .then(response => response.json())
                     .then((resp) => {
                         console.log(resp);
@@ -405,22 +408,23 @@ export default {
                         this.formItem.raw_material_code = resp.data.attributes.raw_material_code
                         this.formItem.weight = resp.data.attributes.weight
                         this.formItem.area = resp.data.attributes.area
-                        this.formItem.material_width = resp.data.attributes.material_width.data.id
-                        this.formItem.material_thickness = resp.data.attributes.material_thickness.data.id
-                        this.formItem.material_length = resp.data.attributes.material_length.data.id
+                        this.formItem.material_width = resp.data.attributes.material_width.data?.id
+                        this.formItem.material_thickness = resp.data.attributes.material_thickness.data?.id
+                        this.formItem.material_length = resp.data.attributes.material_length.data?.id
                         this.formItem.metal_shape = resp.data.attributes.metal_shape.data.id
-                        this.formItem.metal_effect = resp.data.attributes.metal_effect.data.id
+                        this.formItem.metal_effect = resp.data.attributes.metal_effect.data?.id
                         // this.formItem.price = resp.data.attributes.price
                         this.formItem.unit = resp.data.attributes.unit.data?.id
                         this.formItem.status = resp.data.attributes.status
-                        this.formItem.material_type = resp.data.attributes.material_type.data.id
+                        this.formItem.material_type = resp.data.attributes.material_type.data?.id
                         this.formItem.id = resp.data.id
                         // console.log(this.formItem.status);
 
-                        fetch(process.env.VUE_APP_BACKEND + 'material-prices?populate=*&filters[raw_material][id][$eq]=' + 1954)
+                        fetch(process.env.VUE_APP_BACKEND + 'material-prices?populate=*&filters[raw_material][id][$eq]=' + this.MsterialId+'&pagination[page]='+this.page+'&pagination[pageSize]=5')
                             .then(response => response.json())
                             .then((resp) => {
                                 const arr = []
+                                this.lengthPage = resp.meta.pagination.pageCount
                                 arr.push(resp.data)
                                 this.items = arr[0]
                             })
@@ -532,7 +536,7 @@ export default {
         saveOrEdit() {
             if (this.isEdit) {
                 console.log('แก้ไข');
-                axios.put(process.env.VUE_APP_BACKEND + 'materials/' + 1954, {
+                axios.put(process.env.VUE_APP_BACKEND + 'materials/' + this.MsterialId, {
                     "data": {
                         "weight": this.formItem.weight,
                         "area": this.formItem.area,

@@ -36,8 +36,8 @@
                     </vs-tr>
                 </template>
                 <template #tbody>
-                    <vs-tr :key="i" v-for="(item, i) in $vs.getPage(items[0], page, max)" :data="item">
-                        <vs-td>{{ i + 1 }}</vs-td>
+                    <vs-tr :key="i" v-for="(item, i) in items[0]" :data="item">
+                        <vs-td>{{(i+1)+max*(page-1)}}</vs-td>
                         <vs-td>RC-{{ i + 1 }}</vs-td>
                         <vs-td>{{ covertDate(item.attributes.createdAt)}}</vs-td>
                         <vs-td>{{ item.attributes.customer_company.data.attributes.company_name}}</vs-td>
@@ -65,7 +65,9 @@
                     </vs-tr>
                 </template>
                 <template #footer>
-                    <vs-pagination v-model="page" :length="$vs.getLength(items, max)" />
+                    <div @click="getReverseCosts()">
+                         <vs-pagination v-model="page" :length="lengthPage" />
+                    </div>
                 </template>
             </vs-table>
         </v-row>
@@ -99,6 +101,7 @@ export default {
             page: 1,
             max: 10,
             selected: '',
+            lengthPage:'',
             dialog: false,
             dialogDelete: false,
             dialogCardType: false,
@@ -177,10 +180,10 @@ export default {
             this.close()
         },
         getReverseCosts() {
-            fetch(process.env.VUE_APP_BACKEND + 'reverse-costs?populate=*')
+            fetch(process.env.VUE_APP_BACKEND + 'reverse-costs?populate=*&pagination[page]='+this.page+'&pagination[pageSize]=10')
                 .then(response => response.json())
                 .then((resp) => {
-                    console.log('resp',resp);
+                    this.lengthPage = resp.meta.pagination.pageCount
                     this.items.push(resp.data)
                 },
                     console.log(this.items)
